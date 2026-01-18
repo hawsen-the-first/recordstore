@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  username  String    @unique
+  password  String
+  role      Role      @default(USER)
+  requests  Request[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Request {
+  id            String        @id @default(cuid())
+  musicBrainzId String
+  type          RequestType
+  title         String
+  artistName    String?
+  coverUrl      String?
+  status        RequestStatus @default(PENDING)
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminNote     String?
+  lidarrId      Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([musicBrainzId])
+}
+
+enum RequestType {
+  ALBUM
+  ARTIST
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  AVAILABLE
+}
+
+model Settings {
+  id           String  @id @default(cuid())
+  key          String  @unique
+  value        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

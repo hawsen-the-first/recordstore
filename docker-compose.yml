@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  recordstore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: recordstore
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/recordstore.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+    volumes:
+      # Persist SQLite database
+      - recordstore_data:/app/data
+    networks:
+      - recordstore_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/auth/session"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  recordstore_data:
+    driver: local
+
+networks:
+  recordstore_network:
+    driver: bridge
